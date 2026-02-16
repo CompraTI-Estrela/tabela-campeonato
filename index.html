@@ -338,13 +338,15 @@ function resolveParticipant(model, state, spec){
     return state.winner[spec.value] ?? null;
   }
   if(spec.type==='lose'){
-    // loser = if winner picked, return other participant name
+    // loser = se o jogo tinha BYE, esse "perdedor" vira BYE (não existe perdedor real)
     const win = state.winner[spec.value];
     if(!win) return null;
     const m = model.matchesById[spec.value];
     const a = resolveParticipant(model, state, m.p1);
     const b = resolveParticipant(model, state, m.p2);
     if(a===null || b===null) return null;
+    // Se havia BYE, não há perdedor real: use BYE para permitir avanço automático no lower
+    if(a==="BYE" || b==="BYE") return "BYE";
     return (win===a) ? b : (win===b ? a : null);
   }
   return null;
@@ -357,16 +359,23 @@ function buildIndex(model){
 }
 
 function autoAdvanceByes(model, state){
-  // If a match has BYE vs Team, auto-set winner to Team.
-  // Repeat until stable.
+  // Se um jogo tem BYE, avançamos automaticamente.
+  // Também tratamos BYE x BYE para não "travar" a Lower em slots vazios.
   let changed = true;
   while(changed){
     changed = false;
     for(const m of model.matches){
-      if(m.bracket==='F') continue; // final without auto
+      if(m.bracket==='F') continue; // final sem auto
       const a = resolveParticipant(model, state, m.p1);
       const b = resolveParticipant(model, state, m.p2);
       if(!a || !b) continue;
+
+      // BYE x BYE: marca como BYE (slot vazio) para permitir que rounds seguintes resolvam
+      if(a==="BYE" && b==="BYE"){
+        if(state.winner[m.id] !== "BYE"){ state.winner[m.id] = "BYE"; changed = true; }
+        continue;
+      }
+      // BYE x Time
       if(a==="BYE" && b!=="BYE"){
         if(state.winner[m.id] !== b){ state.winner[m.id]=b; changed=true; }
       }
@@ -582,7 +591,17 @@ if(persisted?.teams?.length){
 }else{
   // pré-preencher com exemplo
   $("#teams").value = [
-    "colocar nome das duplas separados por / e uma dupla por linha "
+    "André / Rômulo",
+    "Dionatan / Emerson",
+    "Rafa Diniz / Gabriel Santos",
+    "Diego / Edimar",
+    "Ariel / Lucas",
+    "Felipe / Edu Bet",
+    "Gui Gueter / Alex",
+    "Edu Braga / Mocelin",
+    "Darci / Krone",
+    "Shaolin / Gabriel Matos",
+    "Junão / Bateria",
   ].join("\n");
 }
 </script>
