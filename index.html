@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chave de Campeonato • Dupla Eliminação</title>
+  <style>
+    :root{
+      --bg:#10151c;
+      --panel:#1a2230;
+      --panel2:#222c3d;
+      --text:#e9eef6;
+      --muted:#a9b6c7;
+      --blue:#0f6cbd;
+      --red:#b01e2e;
+      --gold:#b58b00;
+      --line:#2a3548;
+      --ok:#1db954;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.35 system-ui,Segoe UI,Roboto,Arial}
+    header{padding:18px 18px 10px;border-bottom:1px solid var(--line)}
+    h1{margin:0 0 6px;font-size:18px}
+    .sub{color:var(--muted)}
+    main{padding:18px;display:grid;gap:14px}
+    .grid{display:grid;grid-template-columns: 360px 1fr; gap:14px; align-items:start}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{background:linear-gradient(180deg,var(--panel),#141b25);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .card .hd{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .card .bd{padding:12px 14px}
+    .btns{display:flex;gap:8px;flex-wrap:wrap}
+    button{
+      border:1px solid var(--line); background:var(--panel2); color:var(--text);
+      padding:9px 10px; border-radius:10px; cursor:pointer; font-weight:700
+    }
+    button.primary{background:var(--blue); border-color:#0a4e8b}
+    button.danger{background:var(--red); border-color:#7f1320}
+    button.gold{background:var(--gold); border-color:#8b6a00}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    textarea{
+      width:100%; min-height:260px; resize:vertical;
+      border:1px solid var(--line); background:#0f141b; color:var(--text);
+      padding:10px; border-radius:12px; outline:none
+    }
+    .hint{color:var(--muted); margin-top:8px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .row label{color:var(--muted)}
+    input[type="text"]{
+      border:1px solid var(--line); background:#0f141b; color:var(--text);
+      padding:9px 10px; border-radius:10px; outline:none; width:100%;
+    }
+    .bracketWrap{overflow:auto; padding:12px}
+    .bracket{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns: 260px;
+      gap:16px;
+      align-items:start;
+      min-height: 520px;
+    }
+    .col{display:flex; flex-direction:column; gap:10px}
+    .colTitle{
+      font-weight:900; color:var(--muted); letter-spacing:.4px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 10px; border:1px solid var(--line); border-radius:12px;
+      background:rgba(255,255,255,.03)
+    }
+    .match{
+      border:1px solid var(--line); border-radius:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      padding:10px;
+      display:grid;
+      gap:8px;
+      position:relative;
+    }
+    .tag{position:absolute; top:10px; right:10px; font-size:12px; color:var(--muted)}
+    .p{
+      border:1px solid var(--line); border-radius:12px; padding:8px 10px;
+      background:rgba(0,0,0,.20);
+      display:flex; justify-content:space-between; gap:10px; align-items:center;
+      min-height:40px;
+    }
+    .p .name{font-weight:800}
+    .p .seed{color:var(--muted); font-weight:800}
+    select{
+      width:100%;
+      border:1px solid var(--line); border-radius:12px; padding:9px 10px;
+      background:#0f141b; color:var(--text); outline:none;
+      font-weight:800;
+    }
+    .ok{color:var(--ok); font-weight:900}
+    .banner{
+      padding:10px 12px; border-radius:12px; font-weight:900; letter-spacing:.4px;
+      display:flex; align-items:center; justify-content:space-between;
+      border:1px solid var(--line);
+    }
+    .banner.blue{background:rgba(15,108,189,.18)}
+    .banner.red{background:rgba(176,30,46,.16)}
+    .banner.gold{background:rgba(181,139,0,.18)}
+    .section{display:grid; gap:10px}
+    .split{display:grid; grid-template-columns:1fr; gap:10px}
+    .legend{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted)}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03)}
+    .dot{width:10px;height:10px;border-radius:999px}
+    .dot.blue{background:var(--blue)}
+    .dot.red{background:var(--red)}
+    .dot.gold{background:var(--gold)}
+    .footerNote{color:var(--muted); font-size:12px; padding:0 2px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Chave de Campeonato • Dupla Eliminação</h1>
+  <div class="sub">Digite as duplas (uma por linha). O sistema cria automaticamente Winners + Lower e elimina com 2 derrotas.</div>
+</header>
+
+<main>
+  <div class="grid">
+    <div class="card">
+      <div class="hd">
+        <div><strong>Configuração</strong><div class="small">1 dupla por linha</div></div>
+      </div>
+      <div class="bd">
+        <div class="row" style="margin-bottom:10px">
+          <label style="min-width:70px">Nome do torneio</label>
+          <input id="tName" type="text" value="Torneio" />
+        </div>
+
+        <textarea id="teams" placeholder="Ex:\nAndré / Rômulo\nDionatan / Emerson\nRafa Diniz / Gabriel Santos\n..."></textarea>
+        <div class="hint">Dica: você pode colar uma lista. Byes são criados automaticamente para fechar a chave.</div>
+
+        <div class="btns" style="margin-top:12px">
+          <button class="primary" id="genBtn">Gerar chave</button>
+          <button id="resetBtn">Limpar resultados</button>
+          <button class="gold" id="exportBtn">Exportar JSON</button>
+          <button class="danger" id="clearBtn">Zerar tudo</button>
+        </div>
+
+        <div class="legend" style="margin-top:12px">
+          <span class="pill"><span class="dot blue"></span> Winners</span>
+          <span class="pill"><span class="dot red"></span> Lower</span>
+          <span class="pill"><span class="dot gold"></span> Final</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd">
+        <div><strong id="titleLive">Chave</strong><div class="small" id="subtitleLive"></div></div>
+        <div class="footerNote" id="status">—</div>
+      </div>
+      <div class="bd bracketWrap">
+        <div class="section" id="renderRoot">
+          <div class="banner blue"><span>CHAVE PRINCIPAL (WINNERS)</span><span id="wInfo"></span></div>
+          <div id="winners" class="bracket"></div>
+
+          <div class="banner red"><span>REPESCAGEM (LOWER)</span><span id="lInfo"></span></div>
+          <div id="losers" class="bracket"></div>
+
+          <div class="banner gold"><span>GRANDE FINAL</span><span id="fInfo"></span></div>
+          <div id="finals" class="bracket"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/**
+ * Modelo de bracket:
+ * match = {
+ *  id, bracket:'W'|'L'|'F',
+ *  round, index,
+ *  p1:{type:'seed'|'win'|'lose'|'bye', value:number|string}, p2:{...},
+ *  winnerTo:{matchId, slot:1|2} | null,
+ *  loserTo:{matchId, slot:1|2} | null,
+ * }
+ */
+
+const $ = (q)=>document.querySelector(q);
+
+function nextPow2(n){
+  let p=1; while(p<n) p<<=1; return p;
+}
+
+function seedPairs(P){
+  // pares padrão: 1 vs P, 2 vs P-1, 3 vs P-2...
+  const pairs = [];
+  for(let i=1;i<=P/2;i++){
+    pairs.push([i, P+1-i]);
+  }
+  return pairs;
+}
+
+function buildDoubleElim(teams){
+  // teams: array de nomes (1-indexed seeds)
+  const N = teams.length;
+  const P = nextPow2(N);
+  const R = Math.log2(P);
+
+  // seeds with byes
+  const seedName = (seed)=>{
+    if(seed<=N) return teams[seed-1];
+    return "BYE";
+  };
+
+  let matches = [];
+  let id = 1;
+
+  // ---- WINNERS bracket rounds W1..WR
+  const W = []; // W[round] = array of matchIds
+  for(let r=1;r<=R;r++){
+    const numMatches = P / (2**r);
+    W[r] = [];
+    for(let i=1;i<=numMatches;i++){
+      const mid = `W${r}-${i}`;
+      W[r].push(mid);
+      const m = {
+        id: mid, bracket:'W', round:r, index:i,
+        p1:null, p2:null,
+        winnerTo:null, loserTo:null
+      };
+      matches.push(m);
+    }
+  }
+
+  // Round 1 participants from seeds
+  const pairs = seedPairs(P);
+  pairs.forEach((pr, idx)=>{
+    const m = matches.find(x=>x.id===W[1][idx]);
+    m.p1 = {type:'seed', value:pr[0]};
+    m.p2 = {type:'seed', value:pr[1]};
+  });
+
+  // Next winners rounds participants from previous winners
+  for(let r=2;r<=R;r++){
+    for(let i=1;i<=W[r].length;i++){
+      const m = matches.find(x=>x.id===W[r][i-1]);
+      const prevA = W[r-1][(i-1)*2];
+      const prevB = W[r-1][(i-1)*2 + 1];
+      m.p1 = {type:'win', value:prevA};
+      m.p2 = {type:'win', value:prevB};
+    }
+  }
+
+  // ---- LOSERS bracket rounds L1..L(2R-1)
+  const LR = 2*R - 1;
+  const L = [];
+  for(let r=1;r<=LR;r++){
+    // counts follow standard DE for power-of-two:
+    // odd rounds: P / 2^( (r+1)/2 + 1 ) ??? easier: derive by simulation
+    // We'll build structurally using known mapping pattern:
+    // r=1: P/4 matches (losers of W1 paired)
+    // r=2: P/4 matches (winners L1 vs losers W2)
+    // r=3: P/8 matches (winners L2 paired)
+    // r=4: P/8 matches (winners L3 vs losers W3)
+    // ...
+    let numMatches;
+    if(r % 2 === 1){
+      // odd
+      const k = (r+1)/2; // 1,2,3...
+      numMatches = P / (2**(k+1));
+    }else{
+      // even
+      const k = r/2; // 1,2,3...
+      numMatches = P / (2**(k+1));
+    }
+    L[r] = [];
+    for(let i=1;i<=numMatches;i++){
+      const mid = `L${r}-${i}`;
+      L[r].push(mid);
+      matches.push({id:mid, bracket:'L', round:r, index:i, p1:null, p2:null, winnerTo:null, loserTo:null});
+    }
+  }
+
+  // Fill losers participants using mapping
+  // L1: pair losers of W1: (loser W1-1 vs loser W1-2), (3 vs 4)...
+  for(let i=1;i<=L[1].length;i++){
+    const m = matches.find(x=>x.id===L[1][i-1]);
+    m.p1 = {type:'lose', value: W[1][(i-1)*2]};
+    m.p2 = {type:'lose', value: W[1][(i-1)*2 + 1]};
+  }
+
+  // For r even: Lr matches: p1 = win of L(r-1) match i, p2 = lose of W(k+1) match i
+  // For r odd (>=3): Lr matches: p1 = win of L(r-1) match (2i-1), p2 = win of L(r-1) match (2i)
+  for(let r=2;r<=LR;r++){
+    if(r % 2 === 0){
+      const k = r/2 + 1; // losers from Wk
+      for(let i=1;i<=L[r].length;i++){
+        const m = matches.find(x=>x.id===L[r][i-1]);
+        m.p1 = {type:'win', value: L[r-1][i-1]};
+        m.p2 = {type:'lose', value: W[k][i-1]};
+      }
+    }else{
+      // odd >=3
+      for(let i=1;i<=L[r].length;i++){
+        const m = matches.find(x=>x.id===L[r][i-1]);
+        m.p1 = {type:'win', value: L[r-1][(i-1)*2]};
+        m.p2 = {type:'win', value: L[r-1][(i-1)*2 + 1]};
+      }
+    }
+  }
+
+  // ---- Finals
+  const WF = W[R][0]; // winner of winners final match is champion of winners
+  const LF = L[LR][0]; // champion of losers
+  const F1 = "F-1";
+  matches.push({
+    id:F1, bracket:'F', round:1, index:1,
+    p1:{type:'win', value: WF},
+    p2:{type:'win', value: LF},
+    winnerTo:null, loserTo:null
+  });
+
+  // ---- Link winnerTo / loserTo pointers (optional, useful for UI later)
+  // We'll keep resolution by dependency evaluation; pointers not required.
+  // Return model
+  return {N, P, R, LR, matches, seedName};
+}
+
+function createState(model){
+  // winnerByMatchId: string (resolved name) | null
+  return {
+    winner: {}, // matchId -> participantName
+    model
+  };
+}
+
+function resolveParticipant(model, state, spec){
+  if(!spec) return null;
+  if(spec.type==='bye') return "BYE";
+  if(spec.type==='seed'){
+    const seed = spec.value;
+    return model.seedName(seed);
+  }
+  if(spec.type==='win'){
+    return state.winner[spec.value] ?? null;
+  }
+  if(spec.type==='lose'){
+    // loser = if winner picked, return other participant name
+    const win = state.winner[spec.value];
+    if(!win) return null;
+    const m = model.matchesById[spec.value];
+    const a = resolveParticipant(model, state, m.p1);
+    const b = resolveParticipant(model, state, m.p2);
+    if(a===null || b===null) return null;
+    return (win===a) ? b : (win===b ? a : null);
+  }
+  return null;
+}
+
+function buildIndex(model){
+  const map = {};
+  model.matches.forEach(m=>map[m.id]=m);
+  model.matchesById = map;
+}
+
+function autoAdvanceByes(model, state){
+  // If a match has BYE vs Team, auto-set winner to Team.
+  // Repeat until stable.
+  let changed = true;
+  while(changed){
+    changed = false;
+    for(const m of model.matches){
+      if(m.bracket==='F') continue; // final without auto
+      const a = resolveParticipant(model, state, m.p1);
+      const b = resolveParticipant(model, state, m.p2);
+      if(!a || !b) continue;
+      if(a==="BYE" && b!=="BYE"){
+        if(state.winner[m.id] !== b){ state.winner[m.id]=b; changed=true; }
+      }
+      if(b==="BYE" && a!=="BYE"){
+        if(state.winner[m.id] !== a){ state.winner[m.id]=a; changed=true; }
+      }
+    }
+  }
+}
+
+function render(model, state){
+  autoAdvanceByes(model, state);
+
+  const wRoot = $("#winners");
+  const lRoot = $("#losers");
+  const fRoot = $("#finals");
+  wRoot.innerHTML = "";
+  lRoot.innerHTML = "";
+  fRoot.innerHTML = "";
+
+  const roundsW = {};
+  const roundsL = {};
+  const roundsF = {};
+
+  model.matches.forEach(m=>{
+    if(m.bracket==='W') (roundsW[m.round] ??= []).push(m);
+    if(m.bracket==='L') (roundsL[m.round] ??= []).push(m);
+    if(m.bracket==='F') (roundsF[m.round] ??= []).push(m);
+  });
+
+  function renderColumns(root, rounds, bracketLabel){
+    const roundNums = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+    roundNums.forEach(rn=>{
+      const col = document.createElement("div");
+      col.className="col";
+      const t = document.createElement("div");
+      t.className="colTitle";
+      t.innerHTML = `<span>${bracketLabel} R${rn}</span><span class="small">${rounds[rn].length} jogo(s)</span>`;
+      col.appendChild(t);
+
+      rounds[rn].sort((a,b)=>a.index-b.index).forEach(m=>{
+        const a = resolveParticipant(model, state, m.p1);
+        const b = resolveParticipant(model, state, m.p2);
+
+        const div = document.createElement("div");
+        div.className="match";
+        div.innerHTML = `
+          <div class="tag">${m.id}</div>
+          <div class="p"><span class="name">${a ?? "—"}</span><span class="seed"></span></div>
+          <div class="p"><span class="name">${b ?? "—"}</span><span class="seed"></span></div>
+          <div>
+            <select data-mid="${m.id}">
+              <option value="">Escolha o vencedor…</option>
+              ${a && a!=="BYE" ? `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>` : ""}
+              ${b && b!=="BYE" ? `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>` : ""}
+            </select>
+          </div>
+        `;
+
+        const sel = div.querySelector("select");
+        const cur = state.winner[m.id] ?? "";
+        sel.value = cur;
+
+        // disable if can't decide (missing players) or bye auto-set
+        if(!a || !b || a==="BYE" || b==="BYE"){
+          sel.disabled = true;
+        }
+        // final can be selected normally when ready
+        if(m.bracket==='F' && a && b && a!=="BYE" && b!=="BYE"){
+          sel.disabled = false;
+        }
+
+        sel.addEventListener("change", (e)=>{
+          const v = e.target.value || null;
+          if(v===null){
+            delete state.winner[m.id];
+          }else{
+            state.winner[m.id]=unescapeHtml(v);
+          }
+          // clear downstream winners that may become invalid
+          // (simples: limpa tudo e reaplica byes preservando selections where possible?)
+          // Aqui vamos só re-render; invalid selections somem das opções e o select volta vazio.
+          render(model, state);
+          updateStatus(model, state);
+          persist(model, state);
+        });
+
+        col.appendChild(div);
+      });
+
+      root.appendChild(col);
+    });
+  }
+
+  renderColumns(wRoot, roundsW, "W");
+  renderColumns(lRoot, roundsL, "L");
+  renderColumns(fRoot, roundsF, "F");
+}
+
+function updateStatus(model, state){
+  const total = model.matches.length;
+  const decided = Object.keys(state.winner).length;
+  $("#status").innerHTML = `${decided}/${total} resultados lançados`;
+  $("#wInfo").textContent = `${model.N} duplas • chave base ${model.P}`;
+  $("#lInfo").textContent = `${model.LR} rodadas`;
+  $("#fInfo").textContent = `Final pronta quando Winners+Lower definirem`;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function unescapeHtml(str){
+  return String(str).replace(/&quot;/g,'"').replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&");
+}
+
+function persist(model, state){
+  const payload = {
+    tournament: $("#tName").value.trim() || "Torneio",
+    teams: getTeams(),
+    winner: state.winner
+  };
+  localStorage.setItem("de_bracket_state_v1", JSON.stringify(payload));
+}
+
+function loadPersisted(){
+  const raw = localStorage.getItem("de_bracket_state_v1");
+  if(!raw) return null;
+  try{ return JSON.parse(raw);}catch{ return null; }
+}
+
+function getTeams(){
+  return $("#teams").value
+    .split("\n")
+    .map(s=>s.trim())
+    .filter(Boolean);
+}
+
+let current = null;
+
+function generate(){
+  const tname = $("#tName").value.trim() || "Torneio";
+  const teams = getTeams();
+  if(teams.length < 2){
+    alert("Coloque pelo menos 2 duplas (uma por linha).");
+    return;
+  }
+  const model = buildDoubleElim(teams);
+  buildIndex(model);
+  const state = createState(model);
+  // Keep previous winners if same match ids? We'll start clean
+  current = {model, state};
+  $("#titleLive").textContent = tname;
+  $("#subtitleLive").textContent = `${teams.length} duplas • Dupla eliminação`;
+  render(model, state);
+  updateStatus(model, state);
+  persist(model, state);
+}
+
+function resetResults(){
+  if(!current) return;
+  current.state.winner = {};
+  render(current.model, current.state);
+  updateStatus(current.model, current.state);
+  persist(current.model, current.state);
+}
+
+function clearAll(){
+  $("#teams").value = "";
+  $("#tName").value = "Torneio";
+  localStorage.removeItem("de_bracket_state_v1");
+  current = null;
+  $("#winners").innerHTML = "";
+  $("#losers").innerHTML = "";
+  $("#finals").innerHTML = "";
+  $("#titleLive").textContent = "Chave";
+  $("#subtitleLive").textContent = "";
+  $("#status").textContent = "—";
+  $("#wInfo").textContent = "";
+  $("#lInfo").textContent = "";
+  $("#fInfo").textContent = "";
+}
+
+function exportJson(){
+  const payload = loadPersisted();
+  if(!payload){ alert("Nada para exportar ainda. Gere a chave primeiro."); return; }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = (payload.tournament || "torneio").replace(/[^\w\-]+/g,"_") + "_bracket.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("#genBtn").addEventListener("click", generate);
+$("#resetBtn").addEventListener("click", resetResults);
+$("#clearBtn").addEventListener("click", clearAll);
+$("#exportBtn").addEventListener("click", exportJson);
+
+// Load sample / persisted
+const persisted = loadPersisted();
+if(persisted?.teams?.length){
+  $("#tName").value = persisted.tournament || "Torneio";
+  $("#teams").value = persisted.teams.join("\n");
+  generate();
+  if(current){
+    current.state.winner = persisted.winner || {};
+    render(current.model, current.state);
+    updateStatus(current.model, current.state);
+  }
+}else{
+  // pré-preencher com exemplo
+  $("#teams").value = [
+    "André / Rômulo",
+    "Dionatan / Emerson",
+    "Rafa Diniz / Gabriel Santos",
+    "Diego / Edimar",
+    "Ariel / Lucas",
+    "Felipe / Edu Bet",
+    "Gui Gueter / Alex",
+    "Edu Braga / Mocelin",
+    "Darci / Krone",
+    "Shaolin / Gabriel Matos",
+    "Junão / Bateria",
+  ].join("\n");
+}
+</script>
+</body>
+</html>
