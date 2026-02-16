@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chave de Campeonato • Dupla Eliminaçãooo</title>
+  <title>Chave de Campeonato • Dupla Eliminação</title>
   <style>
     :root{
       --bg:#10151c;
@@ -245,7 +245,7 @@ function buildDoubleElim(teams){
   }
 
   // ---- LOSERS bracket rounds L1..L(2R-1)
-  const LR = 2*R - 1;
+  const LR = Math.max(0, 2*R - 2);
   const L = [];
   for(let r=1;r<=LR;r++){
     // counts follow standard DE for power-of-two:
@@ -304,12 +304,12 @@ function buildDoubleElim(teams){
 
   // ---- Finals
   const WF = W[R][0]; // winner of winners final match is champion of winners
-  const LF = L[LR][0]; // champion of losers
+  const LF = (LR>=1 ? L[LR][0] : null); // champion of losers
   const F1 = "F-1";
   matches.push({
     id:F1, bracket:'F', round:1, index:1,
     p1:{type:'win', value: WF},
-    p2:{type:'win', value: LF},
+    p2:(LF ? {type:'win', value: LF} : {type:'lose', value: WF}),
     winnerTo:null, loserTo:null
   });
 
@@ -582,7 +582,7 @@ if(persisted?.teams?.length){
 }else{
   // pré-preencher com exemplo
   $("#teams").value = [
-   "colocar nome separados por / nesse campo aqui de cada dupla"
+    "colocar nome das duplas separados por / e uma dupla por linha "
   ].join("\n");
 }
 </script>
